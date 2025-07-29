@@ -1779,8 +1779,8 @@ void    tPitchDetector_initToPool   (tPitchDetector* const detector, Lfloat lowe
     LEAF* leaf = p->mempool->leaf;
     
     tPeriodDetector_initToPool(&p->_pd, lowestFreq, highestFreq, -120.0f, mempool);
-    p->_current.frequency = 0.0f;
-    p->_current.periodicity = 0.0f;
+    p->_curr.frequency = 0.0f;
+    p->_curr.periodicity = 0.0f;
     p->_frames_after_shift = 0;
     p->sampleRate = leaf->sampleRate;
 }
@@ -1799,8 +1799,8 @@ int     tPitchDetector_tick    (tPitchDetector const p, Lfloat s)
     
     if (tPeriodDetector_isReset(p->_pd))
     {
-        p->_current.frequency = 0.0f;
-        p->_current.periodicity = 0.0f;
+        p->_curr.frequency = 0.0f;
+        p->_curr.periodicity = 0.0f;
     }
     
     int ready = tPeriodDetector_isReady(p->_pd);
@@ -1810,20 +1810,20 @@ int     tPitchDetector_tick    (tPitchDetector const p, Lfloat s)
         
         if (periodicity == -1.0f)
         {
-            p->_current.frequency = 0.0f;
-            p->_current.periodicity = 0.0f;
+            p->_curr.frequency = 0.0f;
+            p->_curr.periodicity = 0.0f;
             return 0;
         }
         
-        if (p->_current.frequency == 0.0f)
+        if (p->_curr.frequency == 0.0f)
         {
             if (periodicity >= ONSET_PERIODICITY)
             {
                 Lfloat f = calculate_frequency(p);
                 if (f > 0.0f)
                 {
-                    p->_current.frequency = f;
-                    p->_current.periodicity = periodicity;
+                    p->_curr.frequency = f;
+                    p->_curr.periodicity = periodicity;
                     p->_frames_after_shift = 0;
                 }
             }
@@ -1845,12 +1845,12 @@ int     tPitchDetector_tick    (tPitchDetector const p, Lfloat s)
 
 Lfloat   tPitchDetector_getFrequency    (tPitchDetector const p)
 {
-    return p->_current.frequency;
+    return p->_curr.frequency;
 }
 
 Lfloat   tPitchDetector_getPeriodicity  (tPitchDetector const p)
 {
-    return p->_current.periodicity;
+    return p->_curr.periodicity;
 }
 
 Lfloat   tPitchDetector_harmonic (tPitchDetector const p, int harmonicIndex)
@@ -1868,7 +1868,7 @@ Lfloat   tPitchDetector_predictFrequency (tPitchDetector const p)
 
 int     tPitchDetector_indeterminate    (tPitchDetector const p)
 {
-    return p->_current.frequency == 0.0f;
+    return p->_curr.frequency == 0.0f;
 }
 
 void    tPitchDetector_setHysteresis    (tPitchDetector const p, Lfloat hysteresis)
@@ -1900,8 +1900,8 @@ static inline void bias(tPitchDetector const p, _pitch_info incoming)
     //=============================================================================
     //_pitch_info result = bias(current, incoming, shift);
     {
-        Lfloat error = p->_current.frequency * 0.015625; // approx 1/4 semitone
-        Lfloat diff = fabsf(p->_current.frequency - incoming.frequency);
+        Lfloat error = p->_curr.frequency * 0.015625; // approx 1/4 semitone
+        Lfloat diff = fabsf(p->_curr.frequency - incoming.frequency);
         int done = 0;
         
         // Try fundamental
@@ -1913,13 +1913,13 @@ static inline void bias(tPitchDetector const p, _pitch_info incoming)
         // Try harmonics and sub-harmonics
         else if (p->_frames_after_shift > 1)
         {
-            if (p->_current.frequency > incoming.frequency)
+            if (p->_curr.frequency > incoming.frequency)
             {
-                int multiple = roundf(p->_current.frequency / incoming.frequency);
+                int multiple = roundf(p->_curr.frequency / incoming.frequency);
                 if (multiple > 1)
                 {
                     Lfloat f = incoming.frequency * multiple;
-                    if (fabsf(p->_current.frequency - f) < error)
+                    if (fabsf(p->_curr.frequency - f) < error)
                     {
                         result.frequency = f;
                         result.periodicity = incoming.periodicity;
@@ -1929,11 +1929,11 @@ static inline void bias(tPitchDetector const p, _pitch_info incoming)
             }
             else
             {
-                int multiple = roundf(incoming.frequency / p->_current.frequency);
+                int multiple = roundf(incoming.frequency / p->_curr.frequency);
                 if (multiple > 1)
                 {
                     Lfloat f = incoming.frequency / multiple;
-                    if (fabsf(p->_current.frequency - f) < error)
+                    if (fabsf(p->_curr.frequency - f) < error)
                     {
                         result.frequency = f;
                         result.periodicity = incoming.periodicity;
@@ -1955,7 +1955,7 @@ static inline void bias(tPitchDetector const p, _pitch_info incoming)
                 shifted = 1;
                 result = incoming;
             }
-            else result = p->_current;
+            else result = p->_curr;
         }
     }
     
@@ -1969,17 +1969,17 @@ static inline void bias(tPitchDetector const p, _pitch_info incoming)
         if (periodicity >= ONSET_PERIODICITY)
         {
             p->_frames_after_shift = 0;
-            p->_current = result;
+            p->_curr = result;
         }
         else if (periodicity < MIN_PERIODICITY)
         {
-            p->_current.frequency = 0.0f;
-            p->_current.periodicity = 0.0f;
+            p->_curr.frequency = 0.0f;
+            p->_curr.periodicity = 0.0f;
         }
     }
     else
     {
-        p->_current = result;
+        p->_curr = result;
     }
 }
 
@@ -2002,8 +2002,8 @@ void    tDualPitchDetector_initToPool   (tDualPitchDetector* const detector, Lfl
     
     p->sampleRate = leaf->sampleRate;
 
-    p->_current.frequency = 0.0f;
-    p->_current.periodicity = 0.0f;
+    p->_curr.frequency = 0.0f;
+    p->_curr.periodicity = 0.0f;
     p->_mean = lowestFreq + ((highestFreq - lowestFreq) / 2.0f);
     p->_predicted_frequency = 0.0f;
     p->_first = 1;
@@ -2038,7 +2038,7 @@ int     tDualPitchDetector_tick    (tDualPitchDetector const p, Lfloat sample)
             _pitch_info _i1;
             _i1.frequency = p->sampleRate / tPeriodDetection_getPeriod(p->_pd1);
             _i1.periodicity = tPeriodDetection_getFidelity(p->_pd1);
-            _pitch_info _i2 = p->_pd2->_current;
+            _pitch_info _i2 = p->_pd2->_curr;
             
             Lfloat pd1_diff = fabsf(_i1.frequency - p->_mean);
             Lfloat pd2_diff = fabsf(_i2.frequency - p->_mean);
@@ -2085,15 +2085,15 @@ int     tDualPitchDetector_tick    (tDualPitchDetector const p, Lfloat sample)
             
             if (p->_first)
             {
-                p->_current = i;
-                p->_mean = p->_current.frequency;
+                p->_curr = i;
+                p->_mean = p->_curr.frequency;
                 p->_first = 0;
                 p->_predicted_frequency = 0.0f;
             }
             else
             {
-                p->_current = i;
-                p->_mean = (0.2222222 * p->_current.frequency) + (0.7777778 * p->_mean);
+                p->_curr = i;
+                p->_mean = (0.2222222 * p->_curr.frequency) + (0.7777778 * p->_mean);
                 p->_predicted_frequency = 0.0f;
             }
             return ready;
@@ -2105,12 +2105,12 @@ int     tDualPitchDetector_tick    (tDualPitchDetector const p, Lfloat sample)
 
 Lfloat   tDualPitchDetector_getFrequency    (tDualPitchDetector const p)
 {
-    return p->_current.frequency;
+    return p->_curr.frequency;
 }
 
 Lfloat   tDualPitchDetector_getPeriodicity  (tDualPitchDetector const p)
 {
-    return p->_current.periodicity;
+    return p->_curr.periodicity;
 }
 
 Lfloat   tDualPitchDetector_predictFrequency (tDualPitchDetector const p)

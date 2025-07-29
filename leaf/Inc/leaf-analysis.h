@@ -946,7 +946,7 @@ extern "C" {
         tMempool mempool;
         
         tPeriodDetector _pd;
-        _pitch_info _current;
+        _pitch_info _curr;
         int _frames_after_shift;// = 0;
         
         Lfloat sampleRate;
@@ -1044,7 +1044,7 @@ extern "C" {
         
         tPeriodDetection _pd1;
         tPitchDetector _pd2;
-        _pitch_info _current;
+        _pitch_info _curr;
         Lfloat _mean;
         Lfloat _predicted_frequency;
         int _first;

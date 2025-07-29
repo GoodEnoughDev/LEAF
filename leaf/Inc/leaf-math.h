@@ -103,7 +103,7 @@ extern "C" {
 //#define SQRT2  1.414213562373095f
 #define INV_SQRT2  0.707106781186548f
 
-#define LOGTEN 2.302585092994
+#define LOGTEN 2.302585092994f
 
 #define log10f_fast(x)  (log2f_approx(x)*0.3010299956639812f)
 #define twelfthRootOf2    1.0594630943592952646f
@@ -391,7 +391,7 @@ float fast_sinf2(Lfloat x);
 // post in the music-dsp list on Date: Tue, 02 Sep 2014 16:50:11 -0400
 static inline Lfloat fastexp2f(Lfloat x)
 {
-    if (x >= -127.0)
+    if (x >= -127.0f)
     {
         Lfloat accumulator, xPower;
         union {Lfloat f; int32_t i;} xBits;
@@ -916,7 +916,7 @@ static inline Lfloat rmstodb(Lfloat f)
     if (f <= 0) return (0);
     else
     {
-        Lfloat val = 100 + 20.f/LOGTEN * log(f);
+        Lfloat val = 100.0f + 20.f/LOGTEN * log(f);
         return (val < 0 ? 0 : val);
     }
 }
